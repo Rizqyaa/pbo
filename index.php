@@ -1,55 +1,80 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>fufufu</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
-  </head>
-  <body>
-  <?php 
+<?php
+class database {
+   protected $database;
+   public function __construct($database="fufufu") {
+    $this->database = $database;
+   }
 
-include "koneksi.php";
-$koneksi = new koneksi();
-$db = $koneksi->getKoneksi();
-$query = $db->query('select * from mahasiswa');
+   function koneksi () {
+    try {
+        $db = new PDO("mysql:host=localhost;dbname=".$this->database,'root','');
+    
+        if($db) return $db;
+    } catch (\Throwable $th) {
+        die("Kesalahan Pada Database :". $th);
+    }
+   }
 
-?>
-<div class="container-sm ">
-<div class="d-grid gap-2 col-6 mx-auto ">
-<a href="tambah.php" class="btn mb-1 bg-primary bg-gradient text-white w-25 " id="insert">Insert<span class="badge text-bg-secondary">+</span></a>
+   function getData($table){
+    $db = $this->koneksi();
+    $query = $db->prepare("select * from ".$table);
+    $query->execute();
+    $data = $query->fetchAll();
 
-</div>
-<table class="table table-light table-borderless container text-center border border-2 shadow p-3 mb-5 bg-body w-50 p-3">
-  <thead>
-    <tr class="table-dark">
-        <th>Id</th>
-        <th>Nama</th>
-        <th>Jurusan</th>
-        <th>Aksi</th>
-    </tr>
-  </thead>
-  <tbody class="">
-    <?php
-    while ($data = $query->fetch()):?>
-    <tr>
+    return $data;
+   }
 
-        
-        <td><?= $data['id']?></td>
-        
-        <td><?= $data['nama']?></td>
+   function tambahData($table, $datas){
 
-        <td><?= $data['jurusan']?></td>
-        
-        <td>
-        <a href="edit.php?id=<?= $data['id']; ?>" class="btn btn-secondary"> Update </a>
-        
-        <a href="prodelete.php?id=<?= $data['id']; ?>" class="btn btn-danger"> Delete </a>
-        </td>
-    </tr>
-    <?php endwhile ?>
-  </tbody>
-</table>
-</div>
-  </body>
-</html>
+    // $data_tabel = join(',', $data);
+    // die($data_tabel);
+    $db = $this->koneksi();
+    $sql = "insert into $table values(''";
+    foreach($datas as $data){
+        $sql .= ",'$data'";
+    }
+
+    $sql .= ")";
+
+    $query = $db->query($sql);
+
+    if($query) return $query;
+   }
+
+   function hapus($table, $data){
+    $db = $this->koneksi();
+
+    $sql = "DELETE FROM $table where ";
+   
+
+    foreach($data as $key=> $value){
+        $sql .= "$key = $value";
+    }
+
+     $query = $db->query($sql);
+
+    if($query) return $query;
+   }
+
+   function update($table, $data, $where){
+
+    // $sql= $database->query("UPDATE `mahasiswa` SET nama='$nama',id_kelas='$kelas' WHERE id='$id'");
+    $db = $this->koneksi();
+    $sql= "UPDATE `$table` SET ";
+    foreach ($data as $key => $value) {
+       $sql .= "$key='$value',";
+    }
+
+    $potong_koma= substr($sql, 0, -1);
+    $sql = "$potong_koma WHERE ";
+
+    foreach ($where as $key => $value) {
+       $sql .= "$key = $value";
+    }
+
+    $query = $db->query($sql);
+
+    if($query) return $query;
+    
+   }
+}
